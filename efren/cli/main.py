@@ -499,8 +499,9 @@ def bench_run(
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Save JSON results"),
     top: int = typer.Option(5, "--top", help="Show top N tasks detail"),
     llm: bool = typer.Option(False, "--llm", help="Call LLM and score outputs (requires OPENAI_API_KEY or --mock)"),
-    model: str = typer.Option("gpt-4o-mini", "--model", help="LLM model for --llm"),
+    model: Optional[str] = typer.Option(None, "--model", help="LLM model for --llm (default: gpt-4o-mini / sonnet)"),
     mock: bool = typer.Option(False, "--mock", help="Use deterministic mock LLM (no API key, for CI/demo)"),
+    provider: str = typer.Option("openai", "--provider", help="LLM backend for --llm: openai | claude (claude CLI login)"),
     angles: int = typer.Option(0, "--angles", "-a", help="Inject N unseen corpus angles per task (0 = off)"),
     beta: float = typer.Option(0.7, "--beta", help="Angles: weight on unavailability vs coherence (0..1)"),
 ):
@@ -542,8 +543,9 @@ def bench_run(
 
     from efren.core.bench import summarize, score_llm_output_detailed, score_to_float
 
-    if llm and not mock and not os.getenv("OPENAI_API_KEY"):
-        console.print("[red]--llm requires OPENAI_API_KEY or --mock[/red]")
+    model = model or ("sonnet" if provider == "claude" else "gpt-4o-mini")
+    if llm and not mock and provider == "openai" and not os.getenv("OPENAI_API_KEY"):
+        console.print("[red]--llm requires OPENAI_API_KEY, --provider claude, or --mock[/red]")
         console.print("Try: efren bench run magician-default --llm --mock  (no key, deterministic)")
         raise typer.Exit(1)
 
@@ -572,7 +574,7 @@ def bench_run(
 
             messages = build_messages(prompt, task.task)
             try:
-                out = call_llm(messages, model=model, mock=mock, task=task.task)
+                out = call_llm(messages, model=model, mock=mock, task=task.task, provider=provider)
             except Exception as e:
                 console.print(f"[red]LLM call failed on {task.id}: {e}[/red]")
                 entry["llm_error"] = str(e)
@@ -581,7 +583,7 @@ def bench_run(
             entry["llm_checks"] = checks
             entry["llm_details"] = details
             entry["llm_score"] = score_to_float(checks)
-            entry["llm_output"] = out[:4000]  # truncated for JSON
+            entry["llm_output"] = out  # full text: bench judge needs it
             llm_scores.append(entry["llm_score"])
             # small sleep to avoid rate limit
             if not mock and idx < len(cfg.tasks):
@@ -662,7 +664,7 @@ def bench_run(
 
     if output:
         out_path = pathlib.Path(output)
-        out_path.write_text(_json.dumps({"mind": mind, "bench": str(bpath), "mode": mode, "mock": mock, "model": model, "angles": angles, "beta": beta, "summary": summary, "llm_avg": sum(llm_scores)/len(llm_scores) if llm_scores else None, "results": results}, indent=2))
+        out_path.write_text(_json.dumps({"mind": mind, "bench": str(bpath), "mode": mode, "mock": mock, "model": model, "provider": provider, "angles": angles, "beta": beta, "summary": summary, "llm_avg": sum(llm_scores)/len(llm_scores) if llm_scores else None, "results": results}, indent=2))
         console.print(f"\n[green]Saved results to {out_path}[/green]")
 
     # hint about graph
@@ -670,6 +672,61 @@ def bench_run(
         console.print("[dim]GraphRAG active (graphify-out/graph.json found) — prompts were graph-grounded[/dim]")
     else:
         console.print("[dim]Tip: efren corpus graphify --path ./corpus to enable GraphRAG (better than keyword)[/dim]")
+
+
+@bench_app.command("judge")
+def bench_judge(
+    a: str = typer.Argument(..., help="Results JSON for arm A (from bench run --llm --output)"),
+    b: str = typer.Argument(..., help="Results JSON for arm B"),
+    model: str = typer.Option("sonnet", "--model", help="Judge model"),
+    provider: str = typer.Option("claude", "--provider", help="Judge backend: claude | openai"),
+    only_angles: bool = typer.Option(False, "--only-angles", help="Judge only tasks where either arm got angles"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Save judgements JSON"),
+):
+    """Blind pairwise novelty/feasibility judge of two bench runs (position-swapped per task)."""
+    import hashlib
+    import json as _json
+
+    from efren.core.bench import judge_pair
+    from efren.core.llm import call_llm
+
+    ra, rb = (_json.loads(pathlib.Path(x).read_text()) for x in (a, b))
+    tasks = {t.id: t.task for t in load_bench(pathlib.Path(ra["bench"])).tasks}
+    by_b = {r["task_id"]: r for r in rb["results"]}
+    rows = []
+    for r in ra["results"]:
+        o = by_b.get(r["task_id"])
+        if not o or not r.get("llm_output") or not o.get("llm_output"):
+            continue
+        if only_angles and not (r.get("angles_injected") or o.get("angles_injected")):
+            continue
+        # deterministic position swap: half the tasks show B first
+        swap = hashlib.sha256(r["task_id"].encode()).digest()[0] % 2 == 1
+        try:
+            j = judge_pair(tasks.get(r["task_id"], r["task_id"]), r["llm_output"], o["llm_output"],
+                           lambda m: call_llm(m, model=model, provider=provider), swap)
+        except Exception as e:
+            console.print(f"[red]{r['task_id']}: judge failed: {e}[/red]")
+            continue
+        j["task_id"] = r["task_id"]
+        rows.append(j)
+        console.print(f"  {r['task_id']}: winner={j['winner']} novelty {j['novelty_a']}/{j['novelty_b']} feas {j['feasibility_a']}/{j['feasibility_b']}")
+    if not rows:
+        console.print("[yellow]Nothing to judge — need two --llm runs with llm_output[/yellow]")
+        raise typer.Exit(1)
+    n = len(rows)
+    wins = {k: sum(r["winner"] == k for r in rows) for k in ("a", "b", "tie")}
+    t = Table(title=f"Judge ({provider}:{model}, n={n})")
+    for col in ("", f"A: angles={ra.get('angles', 0)}", f"B: angles={rb.get('angles', 0)}"):
+        t.add_column(col)
+    t.add_row("wins", str(wins["a"]), str(wins["b"]))
+    for k in ("novelty", "feasibility"):
+        t.add_row(f"{k} (1-5)", f"{sum(r[k + '_a'] for r in rows) / n:.2f}", f"{sum(r[k + '_b'] for r in rows) / n:.2f}")
+    console.print(t)
+    console.print(f"ties: {wins['tie']}")
+    if output:
+        pathlib.Path(output).write_text(_json.dumps({"a": a, "b": b, "model": model, "wins": wins, "rows": rows}, indent=2))
+        console.print(f"[green]Saved judgements to {output}[/green]")
 
 
 @bench_app.command("show")

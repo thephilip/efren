@@ -74,3 +74,14 @@ def test_mind_render_angles_opt_in(tmp_path):
     prompt = mind.render_prompt(registry=reg, corpus=corpus, task=task, angles=2)
     assert "Unseen angles" in prompt
     assert "[source: " in prompt.split("Unseen angles", 1)[1]
+
+
+def test_judge_pair_maps_swapped_positions_back():
+    from efren.core.bench import judge_pair
+
+    reply = '{"novelty_1": 2, "novelty_2": 5, "feasibility_1": 4, "feasibility_2": 3, "winner": "2", "reason": "x"}'
+    # B shown first when swapped, so response 1 is B
+    j = judge_pair("t", "A out", "B out", lambda m: "Sure:\n" + reply, swap=True)
+    assert (j["novelty_a"], j["novelty_b"], j["winner"]) == (5, 2, "a")
+    j = judge_pair("t", "A out", "B out", lambda m: reply, swap=False)
+    assert (j["novelty_a"], j["novelty_b"], j["winner"]) == (2, 5, "b")

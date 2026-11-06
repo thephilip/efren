@@ -117,7 +117,10 @@ Styles (lenses)─┘                                           └─> Bench (2
   - Fail-closed: no task anchor → `[]`. Atom reuse capped at 2 across the top list.
 - [x] CLI `efren corpus angles "<task>" --top 5 --beta 0.7`; `mind compose/preview --angles N --beta` injects an `## Unseen angles` block (opt-in, default prompt unchanged so bench scores are stable).
 - [x] `tests/test_angles.py` (5 tests).
-- [ ] Next: swap lexical proxies for embeddings once `vector_store: chroma` lands; bench A/B `--angles 0` vs `--angles 3` with `--llm`.
+- [x] Bench A/B: `bench run --angles N`, `--provider claude` (`llm.py` `call_claude_cli`, headless `claude -p` with tools/MCP/settings off), `bench judge A.json B.json` blind pairwise novelty/feasibility judge (`bench.py` `judge_pair`), shared corpus `bench/corpus/field_notes.md`.
+- [x] **First A/B (2026-11-06, sonnet gen + sonnet judge, n=20, β=0.7): angles hurt.** `--angles 0` won 15, `--angles 3` won 3, 2 ties; novelty 3.20 vs 3.00, feasibility 3.75 vs 3.25. Structure rubric 88% vs 87%. Caveats: outputs were truncated to 4000 chars before judging (fixed since; angles arm loses more Execution), judge has a second-position bias (unbalanced 11/9 swap split), single run.
+  - Read: β=0.7 lexical combos are often incoherent (honey + windcatcher for a heat exchanger) and "consider at least one" makes the model spend effort shoehorning them.
+- [ ] Next: rerun untruncated; try β=0.3 and softer prompt wording ("optional seeds, ignore if weak"); swap lexical proxies for embeddings once `vector_store: chroma` lands.
 
 ---
 

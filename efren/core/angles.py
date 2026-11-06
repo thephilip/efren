@@ -96,7 +96,8 @@ def extract_atoms(corpus: Corpus, min_chars: int = 20) -> List[Atom]:
                 continue
             seen.add(key)
             atoms.append(Atom(chunk_id=c.id, source=c.source, text=text, terms=terms))
-    return atoms
+    # chunk boundaries cut lines mid-sentence; overlap keeps the full line in the neighbour chunk
+    return [a for a in atoms if not any(a is not b and a.text in b.text for b in atoms)]
 
 
 def _jaccard(a: Set[str], b: Set[str]) -> float:

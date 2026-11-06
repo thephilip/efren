@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
 from typing import List, Dict, Optional
 
 
@@ -32,6 +34,40 @@ def call_openai(
     client = OpenAI(api_key=key, base_url=base_url) if base_url else OpenAI(api_key=key)
     resp = client.chat.completions.create(model=model, messages=messages)  # type: ignore[arg-type]
     return resp.choices[0].message.content or ""
+
+
+# env vars that mark a parent Claude Code session; strip so `claude -p` runs standalone
+_CLAUDE_SESSION_ENV = (
+    "CLAUDECODE",
+    "CLAUDE_CODE_ENTRYPOINT",
+    "CLAUDE_CODE_SESSION_ID",
+    "CLAUDE_CODE_CHILD_SESSION",
+    "CLAUDE_CODE_MESSAGING_SOCKET",
+    "CLAUDE_CODE_MESSAGING_TOKEN",
+)
+
+
+def call_claude_cli(messages: List[Dict[str, str]], model: str = "sonnet", timeout: int = 300) -> str:
+    """Call Claude via the `claude` CLI in headless print mode (uses the CLI's own login).
+
+    Tools, MCP servers and settings are disabled so it answers as a plain chat model.
+    """
+    bin_path = shutil.which("claude")
+    if not bin_path:
+        raise FileNotFoundError("claude CLI not found on PATH — install Claude Code")
+    system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+    user = "\n\n".join(m["content"] for m in messages if m["role"] != "system")
+    env = {k: v for k, v in os.environ.items() if k not in _CLAUDE_SESSION_ENV}
+    args = [
+        bin_path, "-p", "--model", model, "--output-format", "text",
+        "--tools", "", "--strict-mcp-config", "--setting-sources", "", "--no-session-persistence",
+    ]
+    if system:
+        args += ["--system-prompt", system]
+    result = subprocess.run(args, input=user, capture_output=True, text=True, timeout=timeout, env=env)
+    if result.returncode != 0:
+        raise RuntimeError(f"claude CLI failed ({result.returncode}): {(result.stderr or result.stdout)[-500:]}")
+    return result.stdout.strip()
 
 
 def call_mock(messages: List[Dict[str, str]], task: str = "") -> str:
@@ -77,10 +113,13 @@ def call_llm(
     model: str = "gpt-4o-mini",
     mock: bool = False,
     task: str = "",
+    provider: str = "openai",
 ) -> str:
-    """Unified entry: mock or OpenAI."""
+    """Unified entry: mock, OpenAI, or the claude CLI."""
     if mock:
         return call_mock(messages, task=task)
+    if provider == "claude":
+        return call_claude_cli(messages, model=model)
     return call_openai(messages, model=model)
 
 

@@ -181,6 +181,15 @@ efren mind compose magician-alpha --task "..." --angles 3 --project ./my_lab
 
 `--beta 0` = safest combos, `--beta 1` = most alien. Silent if no atom touches the task. See `efren/core/angles.py`.
 
+A/B it on the bench with the `claude` CLI (uses the CLI's own login, no API key) and a blind pairwise judge:
+
+```bash
+# bench/corpus/field_notes.md is a shared cross-domain corpus; point a project's corpus.yaml at it
+efren bench run magician-default --project ./lab --llm --provider claude --angles 0 -o a0.json
+efren bench run magician-default --project ./lab --llm --provider claude --angles 3 -o a3.json
+efren bench judge a0.json a3.json -o judge.json   # novelty + feasibility 1-5, wins, position-swapped
+```
+
 ---
 
 ## Corpus — set at init (now citation-required + query-ranked)

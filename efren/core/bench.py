@@ -129,6 +129,37 @@ def score_llm_output_detailed(output: str, task: BenchTask) -> tuple[Dict[str, b
     return checks, details
 
 
+JUDGE_SYSTEM = """You are a blind judge for invention proposals. You get one task and two responses, 1 and 2.
+Rate each response 1-5 on:
+- novelty: how non-obvious the chosen approach is — would a competent engineer reach for it first? (5 = genuinely surprising)
+- feasibility: would it actually work and meet the task constraints as stated? (5 = clearly works)
+Then pick the overall winner, weighing both equally. Ignore length, formatting and citation style.
+Reply with ONLY a JSON object: {"novelty_1": n, "novelty_2": n, "feasibility_1": n, "feasibility_2": n, "winner": "1"|"2"|"tie", "reason": "<one sentence>"}"""
+
+
+def judge_pair(task: str, out_a: str, out_b: str, call, swap: bool) -> Dict[str, Any]:
+    """Blind pairwise judge. `call(messages) -> str`; `swap` shows B first to cancel position bias.
+
+    Returns scores keyed back to a/b.
+    """
+    import json
+
+    first, second = (out_b, out_a) if swap else (out_a, out_b)
+    user = f"## Task\n{task}\n\n## Response 1\n{first[:20000]}\n\n## Response 2\n{second[:20000]}"
+    raw = call([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": user}])
+    m = re.search(r"\{.*\}", raw, re.S)
+    if not m:
+        raise ValueError(f"judge returned no JSON: {raw[:200]}")
+    j = json.loads(m.group(0))
+    a, b = ("2", "1") if swap else ("1", "2")
+    winner = {a: "a", b: "b"}.get(str(j.get("winner")), "tie")
+    return {
+        "novelty_a": j[f"novelty_{a}"], "novelty_b": j[f"novelty_{b}"],
+        "feasibility_a": j[f"feasibility_{a}"], "feasibility_b": j[f"feasibility_{b}"],
+        "winner": winner, "reason": j.get("reason", ""), "swapped": swap,
+    }
+
+
 def score_to_float(checks: Dict[str, bool]) -> float:
     if not checks:
         return 0.0
