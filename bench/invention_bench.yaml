@@ -1,0 +1,147 @@
+# Efren Invention Bench v1 — 20 tasks that only the Magician can ace
+# Each task is designed to require kick-shot thinking (indirect angle).
+# Eval is heuristic: checks citation, angles, table read, execution, safety.
+# Run: efren bench run --mind magician-default --bench bench/invention_bench.yaml
+
+bench:
+  name: invention-bench-v1
+  version: 1.0
+  description: Hardware-store invention tasks — cheap, falsifiable, citation-required. GraphRAG bonus.
+  created: 2026-09-19
+
+tasks:
+  - id: water-lowcost
+    category: water
+    difficulty: medium
+    task: "Design a low-cost water purifier from hardware store parts. Target <$5, 1L/min, no power. Must be repairable in a village."
+    constraints: [cost, materials, flow_rate, repairability]
+    expected_citations: ["SODIS", "ceramic", "activated carbon"]
+    must_flag_silent: false
+
+  - id: water-sodis-boost
+    category: water
+    difficulty: medium
+    task: "Improve SODIS (PET bottle UV) to kill pathogens in <2h cloudy day. Use only hardware store parts. Prove it works."
+    constraints: [time, UV, turbidity]
+    expected_citations: ["SODIS"]
+
+  - id: energy-gravity-light
+    category: energy
+    difficulty: hard
+    task: "Design a gravity-powered light that charges during the day and glows for 4h at night. No battery, <$10."
+    constraints: [energy, cost, safety]
+    expected_citations: []
+
+  - id: energy-cookstove
+    category: energy
+    difficulty: medium
+    task: "Make a smokeless cookstove from scrap metal that burns 50% less wood than open fire. Sketch airflow."
+    constraints: [energy, materials, safety]
+
+  - id: mechanics-egg-drop
+    category: mechanics
+    difficulty: easy
+    task: "Protect an egg dropped from 10m using only paper, tape, and string. Must be reusable."
+    constraints: [materials, scale]
+
+  - id: mechanics-pulley-lift
+    category: mechanics
+    difficulty: medium
+    task: "Lift 50kg to a roof with no motor, using pulleys/lever from hardware store. One person operation."
+    constraints: [force, safety, cost]
+
+  - id: mechanics-heat-exchanger
+    category: mechanics
+    difficulty: hard
+    task: "Build a heat exchanger from scrap that recovers 70% waste heat from stove to warm water. No welding."
+    constraints: [energy, materials, manufacturability]
+
+  - id: bio-mold-detector
+    category: bio
+    difficulty: medium
+    task: "Detect dangerous mold in a house with no lab equipment. Use visual/chemical cues from hardware store."
+    constraints: [precision, safety, cost]
+
+  - id: bio-seed-bank
+    category: bio
+    difficulty: easy
+    task: "Create a seed bank that keeps seeds viable 2 years with no electricity, humid climate."
+    constraints: [materials, time, precision]
+
+  - id: shelter-cool-no-power
+    category: shelter
+    difficulty: hard
+    task: "Cool a 20m² shelter 5°C in desert with no power, using only pottery, water, and wind."
+    constraints: [energy, materials, climate]
+
+  - id: shelter-flood-barrier
+    category: shelter
+    difficulty: medium
+    task: "Design a reusable flood barrier for a doorway that deploys in <2 min, stores flat. No power tools."
+    constraints: [time, materials, reusability]
+
+  - id: comm-mesh-offgrid
+    category: comms
+    difficulty: hard
+    task: "Build an off-grid mesh messenger from cheap radios that works 2km, no cell. Describe protocol."
+    constraints: [energy, cost, regulation]
+
+  - id: sensing-water-quality
+    category: sensing
+    difficulty: medium
+    task: "Sense whether water is safe to drink using only hardware store chemicals + visual cues. Falsifiable test."
+    constraints: [precision, safety, falsifiability]
+
+  - id: robotics-line-follower-cheap
+    category: robotics
+    difficulty: medium
+    task: "Line follower robot for <$15 using cheapest microcontroller and no custom PCB. Must handle gaps."
+    constraints: [cost, materials, robustness]
+
+  - id: food-preservation
+    category: food
+    difficulty: easy
+    task: "Preserve tomatoes 6 months with no fridge, no electricity, humid environment. Use hardware store parts."
+    constraints: [time, materials, safety]
+
+  - id: waste-plastic-brick
+    category: waste
+    difficulty: medium
+    task: "Turn waste plastic into a load-bearing brick with only heat and hand press. No toxic fumes."
+    constraints: [energy, safety, manufacturability]
+
+  - id: transport-bike-cargo
+    category: transport
+    difficulty: easy
+    task: "Convert a regular bike to carry 100kg cargo with scrap, no welding. Must not affect steering."
+    constraints: [force, safety, cost]
+
+  - id: health-sanitizer
+    category: health
+    difficulty: medium
+    task: "Make hand sanitizer dispenser that is touchless, gravity-fed, no electronics. Hardware store only."
+    constraints: [materials, safety, repairability]
+
+  - id: health-wound-dressing
+    category: health
+    difficulty: hard
+    task: "Improvise a wound dressing that stays sterile 48h in jungle, from hardware and pharmacy parts."
+    constraints: [precision, safety, contamination]
+
+  - id: instrument-spectrometer
+    category: instrument
+    difficulty: hard
+    task: "Build a spectrometer from a phone camera and hardware store optics that resolves 10nm. Calibrate it."
+    constraints: [precision, materials, falsifiability]
+
+eval:
+  rubric:
+    - citation: "Every factual claim cites [source: <file> | id: <id>] or correctly flags (corpus silent)"
+    - angles: "Lists 2-3 angles including one high-risk/high-reward magician shot"
+    - table_read: "Names cushions (constraints), pockets (goals), leave"
+    - execution: "Concrete steps + falsifiable check (Curie/Einstein)"
+    - safety: "Notes failure mode + experiment to verify"
+  scoring:
+    prompt_only: "Score prompt structure (heuristics present) without LLM call"
+    llm: "If OPENAI_API_KEY set, score actual LLM output for same rubric + gold citations"
+  notes: "This bench is for prompt quality first; LLM scoring is optional. Use `efren bench run --mind <name> --bench bench/invention_bench.yaml`"

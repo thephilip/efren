@@ -1,0 +1,36 @@
+[project]
+name = "efren"
+version = "0.1.0"
+description = "Efren — The Magician: composable inventor-mind suite for LLMs. Mix-match cognitive styles + corpus-grounded minds."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "efren" }]
+keywords = ["llm", "persona", "cognitive-style", "rag", "inventor", "agent"]
+dependencies = [
+  "pydantic>=2.0",
+  "pyyaml>=6.0",
+  "typer>=0.9",
+  "rich>=13.0",
+]
+
+[project.optional-dependencies]
+embeddings = ["sentence-transformers", "chromadb>=0.4"]
+openai = ["openai>=1.0"]
+dev = ["pytest>=7.0", "ruff"]
+
+[project.scripts]
+efren = "efren.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/efren/magician"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

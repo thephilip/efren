@@ -1,0 +1,20 @@
+# efren — example project config (efren.yaml)
+project:
+  name: my-magician-project
+  description: A composable inventor mind grounded in my corpus
+  version: 0.1.0
+
+corpus:
+  config: corpus.yaml  # points to CorpusConfig
+
+minds_dir: minds
+
+styles:
+  baselines: efren/styles/baselines  # shipped with efren
+  user: ~/.efren/styles               # your custom styles
+
+# LLM (optional — efren is provider-agnostic, just renders prompts)
+llm:
+  provider: openai  # openai | anthropic | local | none
+  model: gpt-4o-mini
+  base_url: null    # for OpenAI-compatible endpoints

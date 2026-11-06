@@ -1,0 +1,23 @@
+# Corpus is SET AT INIT — this file is created by `efren init --corpus <path>`
+# Edit it to add more sources, then `efren corpus ingest` to verify.
+
+name: example-corpus
+description: Papers, patents, and notes that ground the mind
+
+# Each source is a file or directory. Directories are recursively scanned.
+sources:
+  - path: ./corpus/papers
+    kind: auto
+    include_glob: "**/*"
+    exclude_glob: null
+
+  - path: ./corpus/notes.md
+    kind: markdown
+
+  # - path: https://example.com/paper.pdf
+  #   kind: url
+
+chunk_size: 1200
+chunk_overlap: 150
+embedding_model: null  # set to e.g., "sentence-transformers/all-MiniLM-L6-v2" for vector search
+vector_store: none     # none | chroma | jsonl

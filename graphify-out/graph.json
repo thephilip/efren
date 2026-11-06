@@ -1,0 +1,164 @@
+{
+  "nodes": [
+    {
+      "id": "file:graphify-out/cache/stat-index.json",
+      "label": "graphify-out/cache/stat-index.json",
+      "type": "file",
+      "description": "{\"notes.md\":{\"size\":777,\"mtime_ns\":1789861757928027900,\"indexed_at_ns\":1789863304325813000,\"word_count\":130}}",
+      "source_location": "examples/corpus/graphify-out/cache/stat-index.json"
+    },
+    {
+      "id": "kw:notes",
+      "label": "notes",
+      "type": "concept",
+      "description": "Keyword 'notes' (1 hits in graphify-out/cache/stat-index.json)"
+    },
+    {
+      "id": "kw:mtime_ns",
+      "label": "mtime_ns",
+      "type": "concept",
+      "description": "Keyword 'mtime_ns' (1 hits in graphify-out/cache/stat-index.json)"
+    },
+    {
+      "id": "kw:1789861757928027900",
+      "label": "1789861757928027900",
+      "type": "concept",
+      "description": "Keyword '1789861757928027900' (1 hits in graphify-out/cache/stat-index.json)"
+    },
+    {
+      "id": "kw:indexed_at_ns",
+      "label": "indexed_at_ns",
+      "type": "concept",
+      "description": "Keyword 'indexed_at_ns' (1 hits in graphify-out/cache/stat-index.json)"
+    },
+    {
+      "id": "kw:1789863304325813000",
+      "label": "1789863304325813000",
+      "type": "concept",
+      "description": "Keyword '1789863304325813000' (1 hits in graphify-out/cache/stat-index.json)"
+    },
+    {
+      "id": "kw:word_count",
+      "label": "word_count",
+      "type": "concept",
+      "description": "Keyword 'word_count' (1 hits in graphify-out/cache/stat-index.json)"
+    },
+    {
+      "id": "file:notes.md",
+      "label": "notes.md",
+      "type": "file",
+      "description": "# Example corpus \u2014 replace with your own papers/notes at init  This file is ingested when you run `efren init --corpus <path>`.  ## Water purification notes (example)  - Activated carbon from coconut shells absorbs organics at ~0.5g contaminant / g carbon - Ceramic filters with 0.2 micron pores remo",
+      "source_location": "examples/corpus/notes.md"
+    },
+    {
+      "id": "kw:example",
+      "label": "example",
+      "type": "concept",
+      "description": "Keyword 'example' (2 hits in notes.md)"
+    },
+    {
+      "id": "kw:water",
+      "label": "water",
+      "type": "concept",
+      "description": "Keyword 'water' (2 hits in notes.md)"
+    },
+    {
+      "id": "kw:carbon",
+      "label": "carbon",
+      "type": "concept",
+      "description": "Keyword 'carbon' (2 hits in notes.md)"
+    },
+    {
+      "id": "kw:filter",
+      "label": "filter",
+      "type": "concept",
+      "description": "Keyword 'filter' (2 hits in notes.md)"
+    },
+    {
+      "id": "kw:replace",
+      "label": "replace",
+      "type": "concept",
+      "description": "Keyword 'replace' (1 hits in notes.md)"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:graphify-out/cache/stat-index.json",
+      "target": "kw:notes",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:graphify-out/cache/stat-index.json",
+      "target": "kw:mtime_ns",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:graphify-out/cache/stat-index.json",
+      "target": "kw:1789861757928027900",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:graphify-out/cache/stat-index.json",
+      "target": "kw:indexed_at_ns",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:graphify-out/cache/stat-index.json",
+      "target": "kw:1789863304325813000",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:graphify-out/cache/stat-index.json",
+      "target": "kw:word_count",
+      "type": "contains",
+      "weight": 1
+    },
+    {
+      "source": "file:notes.md",
+      "target": "kw:example",
+      "type": "contains",
+      "weight": 2
+    },
+    {
+      "source": "file:notes.md",
+      "target": "kw:notes",
+      "type": "contains",
+      "weight": 2
+    },
+    {
+      "source": "file:notes.md",
+      "target": "kw:water",
+      "type": "contains",
+      "weight": 2
+    },
+    {
+      "source": "file:notes.md",
+      "target": "kw:carbon",
+      "type": "contains",
+      "weight": 2
+    },
+    {
+      "source": "file:notes.md",
+      "target": "kw:filter",
+      "type": "contains",
+      "weight": 2
+    },
+    {
+      "source": "file:notes.md",
+      "target": "kw:replace",
+      "type": "contains",
+      "weight": 1
+    }
+  ],
+  "directed": false,
+  "metadata": {
+    "lightweight": true,
+    "source": "examples/corpus",
+    "files": 2
+  }
+}
